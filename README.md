@@ -1,2 +1,5 @@
 # STC89C52
-# Education Microcontroller Simulator with Process Scheduling
+# Microcontroller Simulator
+
+## 1.Project Objective:
+**Education Microcontroller Simulator with Process Scheduling**
