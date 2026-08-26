@@ -54,12 +54,34 @@
 
 
 
-
-
-
-
-
 ## 7. Selected programming language:
+**We have selected Java as the programming language for this project.**
+**Java provides object-oriented features that are suitable for representing components such as the CPU, memory, processes, PCB, scheduler, and peripherals.**
+**It also provides suitable libraries for developing the simulator's graphical user interface.**
+
+## 8.Initial System Architecture
+
+
+
+
+
+
+
+
+
+
+
+
+## 9.Initial development plan
+
+
+
+
+
+
+
+
+
 
 
 
