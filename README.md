@@ -44,13 +44,14 @@
 4.**Shahalla Shazeen**
 
 ## 6.Team Responsibilities:
-  | Members |                   | Primary Responsibility |       | Supporting Responsibility |
-  
-  | Muhammed Aman Assadi |
-  
-  | Shahalla Shazeen |
-  | Trupthi Anchan |
-  | Neil Saldanha |
+  ## Team Responsibilities
+
+| Member | Primary Responsibility | Supporting Responsibility |
+|---|---|---|
+| **Muhammed Aman Assadi — Team Leader** | CPU & Instruction Execution | Integration & GitHub |
+| **Shahalla Shazeen** | Memory & Stack | CPU Support |
+| **Trupthi Anchan 3** | Data Structures & Process Management | Testing |
+| **Neil Saldanha 4** | OS Scheduling & Context Switching | UI & Integration |
 
 ## 7. Selected programming language:
 **We have selected Java as the programming language for this project.**
