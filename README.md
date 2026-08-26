@@ -12,4 +12,6 @@
 
 ## 3.Project Scope:
 **The project will cover:**
-**
+**The project focuses on simulating the basic architecture and operation of the STC89C52, including registers, memory, stack, instruction execution, GPIO, timers, and interrupts. It will also implement process management and FCFS, Round Robin, and Priority scheduling, along with performance analysis and interactive features such as program loading, execution, reset, and single-step operation.**
+
+## 4.
