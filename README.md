@@ -44,9 +44,7 @@
 4.**Shahalla Shazeen**
 
 ## 6.Team Responsibilities:
-
-
-
+  |
 
 
 
@@ -55,17 +53,41 @@
 **Java provides object-oriented features that are suitable for representing components such as the CPU, memory, processes, PCB, scheduler, and peripherals.**
 **It also provides suitable libraries for developing the simulator's graphical user interface.**
 
-## 8.Initial System Architecture
+## 8.Initial System Architecture:
 
 
-
-
-
-
-
-
-
-
+                    ┌─────────────────────────────┐
+                    │   STC89C52 MICROCONTROLLER  │
+                    │          SIMULATOR          │
+                    └──────────────┬──────────────┘
+                                   │
+             ┌─────────────────────┼─────────────────────┐
+             ↓                     ↓                     ↓
+      ┌─────────────┐       ┌─────────────┐       ┌──────────────┐
+      │     CPU     │       │   MEMORY    │       │ PERIPHERALS  │
+      └─────────────┘       └──────┬──────┘       └──────┬───────┘
+                                   │                     │
+                                   │              ┌──────┴───────┐
+                                   │              ↓              ↓
+                                   │        ┌────────────┐ ┌────────────┐
+                                   │        │ GPIO/TIMER │ │ INTERRUPTS │
+                                   │        └────────────┘ └────────────┘
+                                   ↓
+                         ┌────────────────────┐
+                         │  PROCESS MANAGER   │
+                         │  PCB & Ready Queue │
+                         └─────────┬──────────┘
+                                   ↓
+                         ┌────────────────────┐
+                         │     SCHEDULER      │
+                         │ FCFS | RR | Priority│
+                         └─────────┬──────────┘
+                                   ↓
+                         ┌────────────────────┐
+                         │   USER INTERFACE   │
+                         │ Load | Run | Step  │
+                         │ Reset & Visualize  │
+                         └────────────────────┘
 
 
 ## 9.Initial development plan:
