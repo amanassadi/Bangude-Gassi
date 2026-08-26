@@ -50,10 +50,6 @@
 
 
 
-
-
-
-
 ## 7. Selected programming language:
 **We have selected Java as the programming language for this project.**
 **Java provides object-oriented features that are suitable for representing components such as the CPU, memory, processes, PCB, scheduler, and peripherals.**
@@ -72,7 +68,27 @@
 
 
 
-## 9.Initial development plan
+## 9.Initial development plan:
+1. **Study STC89C52 Architecture** – Understand its registers, memory organization, instruction set, stack, GPIO, timers, and interrupts.
+
+2. **Design the Simulator** – Define the overall architecture and decide how the CPU, memory, peripherals, processes, and scheduler will interact.
+
+3. **Implement CPU Simulation** – Develop the registers, PC, SP, flags, instruction decoder, and execution of the selected instructions.
+
+4. **Implement Memory and Stack** – Create program memory, data memory, SFRs, and stack operations.
+
+5. **Implement Peripherals** – Add simplified GPIO, timer, and interrupt functionality.
+
+6. **Implement Process Management** – Create PCB structures, process states, ready queue, and context switching.
+
+7. **Implement Scheduling** – Develop FCFS, Round Robin, and Priority scheduling algorithms.
+
+8. **Develop User Interface** – Add options for program loading, run, reset, and single-step execution, along with processor and scheduling visualization.
+
+9. **Testing and Integration** – Test each module individually and then integrate all components into the complete simulator.
+
+10. **Performance Analysis** – Calculate waiting time, turnaround time, response time, CPU utilization, and context switches.
+
 
 
 
