@@ -44,9 +44,11 @@
 4.**Shahalla Shazeen**
 
 ## 6.Team Responsibilities:
-  |
-
-
+  |Members|                    |Primary Responsibility|       |Supporting Responsibility|
+  |Muhammed Aman Assadi|
+  |Shahalla Shazeen|
+  |Trupthi Anchan|
+  |Neil Saldanha|
 
 ## 7. Selected programming language:
 **We have selected Java as the programming language for this project.**
