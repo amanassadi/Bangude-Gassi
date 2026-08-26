@@ -1,2 +1,2 @@
-#STC89C52
-#Education Microcontroller Simulator with Process Scheduling
+# STC89C52
+# Education Microcontroller Simulator with Process Scheduling
