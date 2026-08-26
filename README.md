@@ -19,8 +19,8 @@
 
 
 ## .Team Members:
-**Muhammad Aman Assadi**
-**Neil Saldanha**
+1.**Muhammad Aman Assadi**
+2.**Neil Saldanha**
 **Trupthi Anchan**
 **Shahalla Shazeen**
 
