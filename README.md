@@ -49,8 +49,8 @@
 | Member | Primary Responsibility | Supporting Responsibility |
 |---|---|---|
 | **1.Muhammed Aman Assadi — Team Leader** | CPU & Instruction Execution | Integration & GitHub |
-| **2.Shahalla Shazeen** | Memory & Stack | CPU Support |
-| **3.Trupthi Anchan** | Data Structures & Process Management | Testing |
+| **2.Shahala Shahzeen** | Memory & Stack | CPU Support |
+| **3.Thrupthi Anchan** | Data Structures & Process Management | Testing |
 | **4.Neil Saldanha** | OS Scheduling & Context Switching | UI & Integration |
 
 ## 7. Selected programming language:
