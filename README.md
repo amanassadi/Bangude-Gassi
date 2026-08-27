@@ -48,10 +48,10 @@
 
 | Member | Primary Responsibility | Supporting Responsibility |
 |---|---|---|
-| **1.Muhammed Aman Assadi — Team Leader** | CPU & Instruction Execution | Integration & GitHub |
+| **1.Neil Saldanha — Team Leader** | CPU & Instruction Execution | Integration & GitHub |
 | **2.Shahala Shahzeen** | Memory & Stack | CPU Support |
 | **3.Thrupthi Anchan** | Data Structures & Process Management | Testing |
-| **4.Neil Saldanha** | OS Scheduling & Context Switching | UI & Integration |
+| **4.Muhammed Aman Assadi** | OS Scheduling & Context Switching | UI & Integration |
 
 ## 7. Selected programming language:
 **We have selected Java as the programming language for this project.**
