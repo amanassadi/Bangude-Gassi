@@ -39,9 +39,9 @@
 
 2.**Neil Saldanha**
 
-3.**Trupthi Anchan**
+3.**Thrupthi Anchan**
 
-4.**Shahalla Shazeen**
+4.**Shahala Shahzeen**
 
 ## 6.Team Responsibilities:
   ## Team Responsibilities
