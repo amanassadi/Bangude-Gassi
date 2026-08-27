@@ -59,40 +59,60 @@
 **It also provides suitable libraries for developing the simulator's graphical user interface.**
 
 ## 8.Initial System Architecture:
+<img width="1548" height="2636" alt="image" src="https://github.com/user-attachments/assets/f1b395bf-f5ec-4da2-8a9b-47153bb48fe3" />
 
 
-                    ┌─────────────────────────────┐
-                    │   STC89C52 MICROCONTROLLER  │
-                    │          SIMULATOR          │
-                    └──────────────┬──────────────┘
-                                   │
-             ┌─────────────────────┼─────────────────────┐
-             ↓                     ↓                     ↓
-      ┌─────────────┐       ┌─────────────┐       ┌──────────────┐
-      │     CPU     │       │   MEMORY    │       │ PERIPHERALS  │
-      └─────────────┘       └──────┬──────┘       └──────┬───────┘
-                                   │                     │
-                                   │              ┌──────┴───────┐
-                                   │              ↓              ↓
-                                   │        ┌────────────┐ ┌────────────┐
-                                   │        │ GPIO/TIMER │ │ INTERRUPTS │
-                                   │        └────────────┘ └────────────┘
-                                   ↓
-                         ┌────────────────────┐
-                         │  PROCESS MANAGER   │
-                         │  PCB & Ready Queue │
-                         └─────────┬──────────┘
-                                   ↓
-                         ┌────────────────────┐
-                         │     SCHEDULER      │
-                         │ FCFS | RR | Priority│
-                         └─────────┬──────────┘
-                                   ↓
-                         ┌────────────────────┐
-                         │   USER INTERFACE   │
-                         │ Load | Run | Step  │
-                         │ Reset & Visualize  │
-                         └────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      
 
 
 ## 9.Initial development plan:
