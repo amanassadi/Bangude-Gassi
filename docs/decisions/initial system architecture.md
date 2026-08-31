@@ -21,13 +21,13 @@
 
 ### 4. Microcontroller Hardware Simulation
 - Simulate important STC89C52 components:
-  - CPU and Registers
-  - Program Counter (PC)
-  - Stack Pointer (SP)
-  - Flags
-  - GPIO Ports
-  - Timers
-  - Interrupts
+-CPU and Registers
+- Program Counter (PC)
+- Stack Pointer (SP)
+- Flags
+- GPIO Ports
+- Timers
+- Interrupts
 - Execute instructions based on the simulated architecture.
 
 ### 5. Memory Space
