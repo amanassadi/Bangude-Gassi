@@ -59,12 +59,7 @@
 **It also provides suitable libraries for developing the simulator's graphical user interface.**
 
 ## 8.Initial System Architecture:
-<img width="1548" height="2636" alt="image" src="https://github.com/user-attachments/assets/f1b395bf-f5ec-4da2-8a9b-47153bb48fe3" />
-
-
-
-
-
+<img width="1544" height="2636" alt="mermaid-diagram-2026-08-31-133416" src="https://github.com/user-attachments/assets/870ac282-829b-47c7-b6c0-b557e6a312c7" />
 
 
 
@@ -135,15 +130,6 @@
 9. **Testing and Integration** – Test each module individually and then integrate all components into the complete simulator.
 
 10. **Performance Analysis** – Calculate waiting time, turnaround time, response time, CPU utilization, and context switches.
-
-
-
-
-
-
-
-
-
 
 
 

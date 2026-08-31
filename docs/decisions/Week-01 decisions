@@ -1,0 +1,41 @@
+Week 1 Acceptance
+
+*What we completed:*
+- Discussed about programming language
+- Selected Java for our project
+- Studied STC89C52 microcontroller simulation
+- Divided team work
+- CPU & Instruction Execution - Neil Saldanha
+- Memory & Stack - Shahala Shahzeen
+- Data Structures & Process Management - Thrupthi Anchan
+- OS Scheduling & Context Switching - Muhammad Aman Assadi
+
+*What we tested:*
+- Checked our basic understanding of STC89C52 simulation
+- Reviewed the team work division
+- Designed our initial simulator architecture
+- Every member has contributed/commited
+
+*Accepted:*
+- Nothing is formally accepted yet.
+
+*Not completed:*
+- Detailed design of CPU and memory.
+- Implementation of instruction execution.
+- Implementation of processes and PCB.
+- Implementation of CPU scheduling.
+- UI design.
+
+*Open issues:*
+- The team required more clarity on how STC89C52 components should be represented within the simulator.
+- Further discussion was needed on the instruction set details and overall simulator scope before implementation could begin.
+- Careful planning is required to integrate process scheduling with microcontroller execution.
+
+*Concerns:*
+- We still need to do formal review and acceptance.
+
+*Next plan for Week 2:*
+- Review and accept week 1 work
+- Begin CPU and memory implementation.
+- Implement the basic instruction set.
+
