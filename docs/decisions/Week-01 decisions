@@ -20,14 +20,22 @@ Week 1 Acceptance
 - Nothing is formally accepted yet.
 
 *Not completed:*
-- Formal acceptance of week 1 work is still pending.
+- Detailed design of CPU and memory.
+- Implementation of instruction execution.
+- Implementation of processes and PCB.
+- Implementation of CPU scheduling.
+- UI design.
 
 *Open issues:*
-- No open issues for now.
+- The team required more clarity on how STC89C52 components should be represented within the simulator.
+- Further discussion was needed on the instruction set details and overall simulator scope before implementation could begin.
+- Careful planning is required to integrate process scheduling with microcontroller execution.
 
 *Concerns:*
 - We still need to do formal review and acceptance.
 
 *Next plan for Week 2:*
 - Review and accept week 1 work
-- Start coding the assigned modules
+- Begin CPU and memory implementation.
+- Implement the basic instruction set.
+
