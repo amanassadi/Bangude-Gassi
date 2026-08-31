@@ -1,19 +1,25 @@
 Date:28-08-2026
 Meeting Number:1
 Participants:4
+
 Agenda:
 1.Deciding the programming language.
 2.Understanding the simulation of our microcontroller STC89C52
+
 Discussion:
 1.The team has decided to use java as the language.
 2.The team has assigned responsibilities to all.
+
 Decisions:
 1.Neil Saldanha will be working on CPU & Instruction Execution.
 2.Shahala Shazeen will be working on Memory & Stack.
 3. Thrupthi Anchan will be working on Data Structures & Process Management.
 4.Muhammad Aman Assadi will be working on OS Scheduling & Context Switching.
+
 Action items:
 1.Neil Saldanha→ CPU & Instruction Execution
 2.Shahala Shazeen → Memory & Stack
 3.Thrupthi Anchan → Data Structures & Process Management
 4.Muhammad Aman Assadi→ OS Scheduling & Context Switching
+
+Next Meeting date: 02-09-2026
