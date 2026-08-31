@@ -59,7 +59,8 @@
 **It also provides suitable libraries for developing the simulator's graphical user interface.**
 
 ## 8.Initial System Architecture:
-![Uploading mermaid-diagram-2026-08-31-133416.png…]()
+<img width="1544" height="2636" alt="mermaid-diagram-2026-08-31-133416" src="https://github.com/user-attachments/assets/870ac282-829b-47c7-b6c0-b557e6a312c7" />
+
 
 
 
