@@ -1,31 +1,32 @@
 package simulator;
 
 public class DataMemory {
-   private int[] memory = new int[256];
 
-   public DataMemory() {
-   }
+    private int[] memory = new int[256];
 
-   private void checkAddress(int var1) {
-      if (var1 < 0 || var1 > 255) {
-         throw new IllegalArgumentException("Invalid memory address");
-      }
-   }
+    // Check whether the address is valid
+    private void checkAddress(int address) {
+        if (address < 0 || address > 0xFF) {
+            throw new IllegalArgumentException("Invalid memory address");
+        }
+    }
 
-   public void write(int var1, int var2) {
-      this.checkAddress(var1);
-      this.memory[var1] = var2 & 255;
-   }
+    // Write value to memory
+    public void write(int address, int value) {
+        checkAddress(address);
+        memory[address] = value & 0xFF;
+    }
 
-   public int read(int var1) {
-      this.checkAddress(var1);
-      return this.memory[var1];
-   }
+    // Read value from memory
+    public int read(int address) {
+        checkAddress(address);
+        return memory[address];
+    }
 
-   public void reset() {
-      for(int var1 = 0; var1 < this.memory.length; ++var1) {
-         this.memory[var1] = 0;
-      }
-
-   }
+    // Clear all memory
+    public void reset() {
+        for (int i = 0; i < memory.length; i++) {
+            memory[i] = 0;
+        }
+    }
 }
