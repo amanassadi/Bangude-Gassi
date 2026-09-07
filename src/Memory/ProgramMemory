@@ -1,0 +1,46 @@
+// Source code is decompiled from a .class file using FernFlower decompiler (from Intellij IDEA).
+package simulator;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class ProgramMemory {
+   private List<Instruction> instructions = new ArrayList();
+
+   public ProgramMemory() {
+   }
+
+   public void load(Instruction var1) {
+      this.instructions.add(var1);
+   }
+
+   public void loadProgram(List<Instruction> var1) {
+      this.instructions.clear();
+      this.instructions.addAll(var1);
+   }
+
+   public void loadProgram(Instruction[] var1) {
+      this.instructions.clear();
+
+      for(Instruction var5 : var1) {
+         this.instructions.add(var5);
+      }
+
+   }
+
+   public Instruction read(int var1) {
+      if (var1 >= 0 && var1 < this.instructions.size()) {
+         return (Instruction)this.instructions.get(var1);
+      } else {
+         throw new IllegalArgumentException("Invalid program address");
+      }
+   }
+
+   public int size() {
+      return this.instructions.size();
+   }
+
+   public void clear() {
+      this.instructions.clear();
+   }
+}
