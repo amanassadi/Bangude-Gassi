@@ -1,37 +1,49 @@
 package simulator;
 
 public class StackMemory {
-   private DataMemory memory;
-   private int sp = 7;
 
-   public StackMemory(DataMemory var1) {
-      this.memory = var1;
-   }
+    private DataMemory memory;
 
-   public void push(int var1) {
-      if (this.sp >= 255) {
-         throw new IllegalStateException("Stack overflow");
-      } else {
-         ++this.sp;
-         this.memory.write(this.sp, var1);
-      }
-   }
+    // 8051 stack starts at 07H
+    private int sp = 0x07;
 
-   public int pop() {
-      if (this.sp <= 7) {
-         throw new IllegalStateException("Stack underflow");
-      } else {
-         int var1 = this.memory.read(this.sp);
-         --this.sp;
-         return var1;
-      }
-   }
+    public StackMemory(DataMemory memory) {
+        this.memory = memory;
+    }
 
-   public int getSP() {
-      return this.sp;
-   }
+    // Push value onto stack
+    public void push(int value) {
 
-   public void reset() {
-      this.sp = 7;
-   }
+        if (sp >= 0xFF) {
+            throw new IllegalStateException("Stack overflow");
+        }
+
+        sp++;
+
+        memory.write(sp, value);
+    }
+
+    // Pop value from stack
+    public int pop() {
+
+        if (sp <= 0x07) {
+            throw new IllegalStateException("Stack underflow");
+        }
+
+        int value = memory.read(sp);
+
+        sp--;
+
+        return value;
+    }
+
+    // Get current stack pointer
+    public int getSP() {
+        return sp;
+    }
+
+    // Reset stack pointer
+    public void reset() {
+        sp = 0x07;
+    }
 }
