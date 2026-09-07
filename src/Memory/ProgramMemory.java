@@ -1,45 +1,35 @@
 package simulator;
+public class Instruction {
+    private final String opcode;
+    private final String destination;
+    private final String operand;
 
-import java.util.ArrayList;
-import java.util.List;
+    public Instruction(String opcode, String destination, String operand) {
+        this.opcode = opcode.toUpperCase();
+        this.destination = destination == null ? "" : destination.toUpperCase();
+        this.operand = operand == null ? "" : operand.toUpperCase();
+    }
 
-public class ProgramMemory {
-   private List<Instruction> instructions = new ArrayList();
+    public Instruction(String opcode) {
+        this(opcode, "", "");
+    }
 
-   public ProgramMemory() {
-   }
+    public String getOpcode() {
+        return opcode;
+    }
 
-   public void load(Instruction var1) {
-      this.instructions.add(var1);
-   }
+    public String getDestination() {
+        return destination;
+    }
 
-   public void loadProgram(List<Instruction> var1) {
-      this.instructions.clear();
-      this.instructions.addAll(var1);
-   }
+    public String getOperand() {
+        return operand;
+    }
 
-   public void loadProgram(Instruction[] var1) {
-      this.instructions.clear();
-
-      for(Instruction var5 : var1) {
-         this.instructions.add(var5);
-      }
-
-   }
-
-   public Instruction read(int var1) {
-      if (var1 >= 0 && var1 < this.instructions.size()) {
-         return (Instruction)this.instructions.get(var1);
-      } else {
-         throw new IllegalArgumentException("Invalid program address");
-      }
-   }
-
-   public int size() {
-      return this.instructions.size();
-   }
-
-   public void clear() {
-      this.instructions.clear();
-   }
+    @Override
+    public String toString() {
+        if (destination.isEmpty()) return opcode;
+        if (operand.isEmpty()) return opcode + " " + destination;
+        return opcode + " " + destination + "," + operand;
+    }
 }
