@@ -1,302 +1,272 @@
 package ui;
 
-import javax.swing.*;
-import java.awt.*;
+import simulator.CPU;
+import simulator.Instruction;
 
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Simple Swing UI for the existing STC89C52 simulator classes.
+ * The UI controls and displays the real CPU; it does not re-implement the CPU.
+ */
 public class SimulatorUI extends JFrame {
 
-    // CPU state displayed by the UI
-    private int pc = 0;
-    private int accumulator = 0;
-    private int bRegister = 0;
-    private int r0 = 0;
-    private int r1 = 0;
-    private String flags = "00000000";
-    private String currentInstruction = "None";
+    private final CPU cpu = new CPU();
+    private List<Instruction> loadedProgram = new ArrayList<>();
 
-    // UI components
-    private JLabel pcLabel;
-    private JLabel accumulatorLabel;
-    private JLabel bLabel;
-    private JLabel r0Label;
-    private JLabel r1Label;
-    private JLabel flagsLabel;
-    private JLabel instructionLabel;
-    private JLabel statusLabel;
+    private final DefaultTableModel programModel = new DefaultTableModel(
+            new Object[]{"Address", "Instruction"}, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+    };
 
-    private JTextArea executionTrace;
-    private JTextArea programArea;
+    private final JTable programTable = new JTable(programModel);
+    private final JTextArea traceArea = new JTextArea();
+    private final JLabel statusLabel = new JLabel("READY");
+    private final JLabel currentInstructionLabel = new JLabel("None");
+
+    private final JLabel pcLabel = new JLabel();
+    private final JLabel spLabel = new JLabel();
+    private final JLabel aLabel = new JLabel();
+    private final JLabel bLabel = new JLabel();
+    private final JLabel[] rLabels = new JLabel[8];
+    private final JLabel flagsLabel = new JLabel();
+
+    private final DefaultTableModel memoryModel = new DefaultTableModel(
+            new Object[]{"Address", "Value"}, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+    };
 
     public SimulatorUI() {
         setTitle("STC89C52 Microcontroller Simulator");
-        setSize(900, 600);
+        setSize(950, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        createUI();
+        buildUI();
+        updateCpuDisplay();
     }
 
-    private void createUI() {
+    private void buildUI() {
+        setLayout(new BorderLayout(8, 8));
 
-        // ---------------- TOP BUTTON PANEL ----------------
-        JPanel buttonPanel = new JPanel();
-
+        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton loadButton = new JButton("Load");
         JButton resetButton = new JButton("Reset");
         JButton stepButton = new JButton("Step");
         JButton runButton = new JButton("Run");
 
-        buttonPanel.add(loadButton);
-        buttonPanel.add(resetButton);
-        buttonPanel.add(stepButton);
-        buttonPanel.add(runButton);
+        top.add(loadButton);
+        top.add(resetButton);
+        top.add(stepButton);
+        top.add(runButton);
+        top.add(Box.createHorizontalStrut(20));
+        top.add(new JLabel("Status:"));
+        top.add(statusLabel);
+        add(top, BorderLayout.NORTH);
 
-        // ---------------- PROGRAM AREA ----------------
-        programArea = new JTextArea();
-        programArea.setEditable(false);
-        programArea.setBorder(BorderFactory.createTitledBorder("Program / Instructions"));
+        programTable.setFillsViewportHeight(true);
+        programTable.setRowHeight(24);
 
-        // ---------------- CPU STATE PANEL ----------------
-        JPanel cpuPanel = new JPanel(new GridLayout(8, 2));
+        JPanel left = new JPanel(new BorderLayout(5, 5));
+        left.setBorder(BorderFactory.createTitledBorder("Program / Instructions"));
+        left.add(new JScrollPane(programTable), BorderLayout.CENTER);
 
-        pcLabel = new JLabel("0");
-        accumulatorLabel = new JLabel("0");
-        bLabel = new JLabel("0");
-        r0Label = new JLabel("0");
-        r1Label = new JLabel("0");
-        flagsLabel = new JLabel(flags);
-        instructionLabel = new JLabel(currentInstruction);
-        statusLabel = new JLabel("Ready");
+        JPanel currentPanel = new JPanel(new BorderLayout());
+        currentPanel.setBorder(BorderFactory.createTitledBorder("Current Instruction"));
+        currentPanel.add(currentInstructionLabel, BorderLayout.CENTER);
+        left.add(currentPanel, BorderLayout.SOUTH);
 
-        cpuPanel.setBorder(BorderFactory.createTitledBorder("CPU State"));
+        JPanel center = new JPanel(new BorderLayout(5, 5));
+        center.setBorder(BorderFactory.createTitledBorder("Registers"));
+        center.add(createRegisterPanel(), BorderLayout.CENTER);
 
-        cpuPanel.add(new JLabel("Program Counter (PC):"));
-        cpuPanel.add(pcLabel);
+        JPanel right = new JPanel(new BorderLayout(5, 5));
+        right.setBorder(BorderFactory.createTitledBorder("Memory (Data Memory)"));
+        right.add(new JScrollPane(new JTable(memoryModel)), BorderLayout.CENTER);
 
-        cpuPanel.add(new JLabel("Accumulator (A):"));
-        cpuPanel.add(accumulatorLabel);
+        JPanel upper = new JPanel(new GridLayout(1, 3, 8, 8));
+        upper.add(left);
+        upper.add(center);
+        upper.add(right);
 
-        cpuPanel.add(new JLabel("B Register:"));
-        cpuPanel.add(bLabel);
+        traceArea.setEditable(false);
+        traceArea.setLineWrap(true);
+        traceArea.setWrapStyleWord(true);
+        traceArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 13));
 
-        cpuPanel.add(new JLabel("R0:"));
-        cpuPanel.add(r0Label);
+        JPanel tracePanel = new JPanel(new BorderLayout());
+        tracePanel.setBorder(BorderFactory.createTitledBorder("Execution Trace"));
+        tracePanel.add(new JScrollPane(traceArea), BorderLayout.CENTER);
 
-        cpuPanel.add(new JLabel("R1:"));
-        cpuPanel.add(r1Label);
+        JPanel bottom = new JPanel(new BorderLayout(8, 8));
+        bottom.add(tracePanel, BorderLayout.CENTER);
+        bottom.add(createFlagsPanel(), BorderLayout.EAST);
 
-        cpuPanel.add(new JLabel("Flags / PSW:"));
-        cpuPanel.add(flagsLabel);
-
-        cpuPanel.add(new JLabel("Current Instruction:"));
-        cpuPanel.add(instructionLabel);
-
-        cpuPanel.add(new JLabel("Execution Status:"));
-        cpuPanel.add(statusLabel);
-
-        // ---------------- EXECUTION TRACE ----------------
-        executionTrace = new JTextArea();
-        executionTrace.setEditable(false);
-        executionTrace.setBorder(
-                BorderFactory.createTitledBorder("Execution Trace")
-        );
-
-        // ---------------- CENTER PANEL ----------------
-        JPanel centerPanel = new JPanel(new GridLayout(1, 2));
-
-        JPanel leftPanel = new JPanel(new BorderLayout());
-        leftPanel.add(new JScrollPane(programArea), BorderLayout.CENTER);
-
-        JPanel rightPanel = new JPanel(new BorderLayout());
-        rightPanel.add(cpuPanel, BorderLayout.NORTH);
-        rightPanel.add(new JScrollPane(executionTrace), BorderLayout.CENTER);
-
-        centerPanel.add(leftPanel);
-        centerPanel.add(rightPanel);
-
-        // ---------------- MAIN LAYOUT ----------------
-        setLayout(new BorderLayout());
-
-        add(buttonPanel, BorderLayout.NORTH);
-        add(centerPanel, BorderLayout.CENTER);
-
-        // ---------------- BUTTON ACTIONS ----------------
+        add(upper, BorderLayout.CENTER);
+        add(bottom, BorderLayout.SOUTH);
 
         loadButton.addActionListener(e -> loadProgram());
-
         resetButton.addActionListener(e -> resetSimulator());
-
-        stepButton.addActionListener(e -> executeStep());
-
+        stepButton.addActionListener(e -> stepProgram());
         runButton.addActionListener(e -> runProgram());
-
-        resetSimulator();
     }
 
-    // ---------------- LOAD ----------------
+    private JPanel createRegisterPanel() {
+        JPanel panel = new JPanel(new GridLayout(0, 2, 4, 4));
+        panel.add(new JLabel("PC"));
+        panel.add(pcLabel);
+        panel.add(new JLabel("SP"));
+        panel.add(spLabel);
+        panel.add(new JLabel("A"));
+        panel.add(aLabel);
+        panel.add(new JLabel("B"));
+        panel.add(bLabel);
+
+        for (int i = 0; i < 8; i++) {
+            rLabels[i] = new JLabel();
+            panel.add(new JLabel("R" + i));
+            panel.add(rLabels[i]);
+        }
+        return panel;
+    }
+
+    private JPanel createFlagsPanel() {
+        JPanel panel = new JPanel(new GridLayout(2, 1, 4, 4));
+        panel.setBorder(BorderFactory.createTitledBorder("Flags / Status"));
+        flagsLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        panel.add(flagsLabel);
+        return panel;
+    }
+
+    /** Load a small demo program using the project's real Instruction and CPU classes. */
     private void loadProgram() {
+        loadedProgram = new ArrayList<>();
+        loadedProgram.add(new Instruction("MOV", "R0", "#10"));
+        loadedProgram.add(new Instruction("MOV", "A", "#20"));
+        loadedProgram.add(new Instruction("ADD", "A", "R0"));
+        loadedProgram.add(new Instruction("INC", "R0", ""));
+        loadedProgram.add(new Instruction("DEC", "A", ""));
+        loadedProgram.add(new Instruction("ANL", "A", "#15"));
+        loadedProgram.add(new Instruction("ORL", "A", "#2"));
 
-        programArea.setText(
-                "MOV A, #05\n" +
-                "ADD A, #03\n" +
-                "MOV R0, A\n" +
-                "END\n"
-        );
+        cpu.loadProgram(loadedProgram);
 
-        statusLabel.setText("Program Loaded");
+        programModel.setRowCount(0);
+        for (int i = 0; i < loadedProgram.size(); i++) {
+            programModel.addRow(new Object[]{String.format("%04X", i), loadedProgram.get(i)});
+        }
 
-        executionTrace.append(
-                "Program loaded successfully.\n"
-        );
+        currentInstructionLabel.setText("None");
+        traceArea.setText("Program loaded successfully.\n");
+        statusLabel.setText("LOADED");
+        updateCpuDisplay();
     }
 
-    // ---------------- RESET ----------------
     private void resetSimulator() {
-
-        pc = 0;
-        accumulator = 0;
-        bRegister = 0;
-        r0 = 0;
-        r1 = 0;
-        flags = "00000000";
-        currentInstruction = "None";
-
-        updateDisplay();
-
-        if (executionTrace != null) {
-            executionTrace.setText("Simulator reset.\n");
-        }
-
-        if (statusLabel != null) {
-            statusLabel.setText("Ready");
-        }
+        cpu.reset();
+        currentInstructionLabel.setText("None");
+        traceArea.setText("Simulator reset.\n");
+        statusLabel.setText("READY");
+        updateCpuDisplay();
     }
 
-    // ---------------- STEP ----------------
-    private void executeStep() {
+    private void stepProgram() {
+        Instruction instruction = cpu.fetch();
 
-        if (pc == 0) {
-            currentInstruction = "MOV A, #05";
-
-            executionTrace.append(
-                    "FETCH → MOV A, #05\n"
-            );
-
-            executionTrace.append(
-                    "DECODE → Load immediate value 05 into A\n"
-            );
-
-            accumulator = 5;
-
-            executionTrace.append(
-                    "EXECUTE → A = 5\n\n"
-            );
-        }
-
-        else if (pc == 1) {
-            currentInstruction = "ADD A, #03";
-
-            executionTrace.append(
-                    "FETCH → ADD A, #03\n"
-            );
-
-            executionTrace.append(
-                    "DECODE → Add 03 to A\n"
-            );
-
-            accumulator = accumulator + 3;
-
-            executionTrace.append(
-                    "EXECUTE → A = " + accumulator + "\n\n"
-            );
-        }
-
-        else if (pc == 2) {
-            currentInstruction = "MOV R0, A";
-
-            executionTrace.append(
-                    "FETCH → MOV R0, A\n"
-            );
-
-            executionTrace.append(
-                    "DECODE → Copy A into R0\n"
-            );
-
-            r0 = accumulator;
-
-            executionTrace.append(
-                    "EXECUTE → R0 = " + r0 + "\n\n"
-            );
-        }
-
-        else {
-            currentInstruction = "END";
-
-            executionTrace.append(
-                    "Program terminated.\n"
-            );
-
-            statusLabel.setText("Program Finished");
-
-            updateDisplay();
+        if (instruction == null) {
+            statusLabel.setText("FINISHED");
+            currentInstructionLabel.setText("None");
+            traceArea.append("Program finished.\n");
+            updateCpuDisplay();
             return;
         }
 
-        pc++;
+        int oldPC = cpu.getPC();
+        int oldA = cpu.getA();
+        int oldR0 = cpu.getRegisterValue("R0");
 
-        statusLabel.setText("Executing");
+        currentInstructionLabel.setText(String.format("%04X : %s", oldPC, instruction));
+        traceArea.append(String.format("FETCH   : %s%n", instruction));
+        traceArea.append(String.format("DECODE  : %s%n", instruction));
 
-        updateDisplay();
+        cpu.step();
+
+        traceArea.append(String.format(
+                "EXECUTE : PC %04X -> %04X | A %02X -> %02X | R0 %02X -> %02X%n%n",
+                oldPC, cpu.getPC(), oldA & 0xFF, cpu.getA() & 0xFF,
+                oldR0 & 0xFF, cpu.getRegisterValue("R0") & 0xFF));
+
+        statusLabel.setText(cpu.fetch() == null ? "FINISHED" : "EXECUTING");
+        updateCpuDisplay();
+        selectCurrentInstruction();
     }
 
-    // ---------------- RUN ----------------
     private void runProgram() {
-
-        while (pc <= 2) {
-            executeStep();
+        if (cpu.fetch() == null) {
+            statusLabel.setText("FINISHED");
+            return;
         }
 
-        statusLabel.setText("Program Finished");
+        while (!cpu.isHalted() && cpu.fetch() != null) {
+            stepProgram();
+        }
+
+        statusLabel.setText("FINISHED");
+        updateCpuDisplay();
     }
 
-    // ---------------- UPDATE DISPLAY ----------------
-    private void updateDisplay() {
-
-        if (pcLabel != null) {
-            pcLabel.setText(String.valueOf(pc));
-        }
-
-        if (accumulatorLabel != null) {
-            accumulatorLabel.setText(String.valueOf(accumulator));
-        }
-
-        if (bLabel != null) {
-            bLabel.setText(String.valueOf(bRegister));
-        }
-
-        if (r0Label != null) {
-            r0Label.setText(String.valueOf(r0));
-        }
-
-        if (r1Label != null) {
-            r1Label.setText(String.valueOf(r1));
-        }
-
-        if (flagsLabel != null) {
-            flagsLabel.setText(flags);
-        }
-
-        if (instructionLabel != null) {
-            instructionLabel.setText(currentInstruction);
+    private void selectCurrentInstruction() {
+        int row = cpu.getPC();
+        if (row >= 0 && row < programModel.getRowCount()) {
+            programTable.setRowSelectionInterval(row, row);
+            programTable.scrollRectToVisible(programTable.getCellRect(row, 0, true));
+        } else {
+            programTable.clearSelection();
         }
     }
 
-    // ---------------- MAIN ----------------
+    private void updateCpuDisplay() {
+        pcLabel.setText(String.format("%04X", cpu.getPC()));
+        spLabel.setText(String.format("%02X", cpu.getSP()));
+        aLabel.setText(String.format("%02X", cpu.getA() & 0xFF));
+        bLabel.setText(String.format("%02X", cpu.getRegisterValue("B") & 0xFF));
+
+        for (int i = 0; i < 8; i++) {
+            rLabels[i].setText(String.format("%02X", cpu.getRegisterValue("R" + i) & 0xFF));
+        }
+
+        flagsLabel.setText(String.format(
+                "CY=%d   AC=%d   OV=%d   P=%d",
+                cpu.getCY() ? 1 : 0,
+                cpu.getAC() ? 1 : 0,
+                cpu.getOV() ? 1 : 0,
+                cpu.getP() ? 1 : 0));
+
+        updateMemoryDisplay();
+    }
+
+    private void updateMemoryDisplay() {
+        memoryModel.setRowCount(0);
+        int[] addresses = {0, 1, 2, 3, 4, 5, 6, 7, 0x20};
+        for (int address : addresses) {
+            memoryModel.addRow(new Object[]{
+                    String.format("%02X", address),
+                    String.format("%02X", cpu.readDataMemory(address))
+            });
+        }
+    }
+
     public static void main(String[] args) {
-
-        SwingUtilities.invokeLater(() -> {
-            SimulatorUI simulator = new SimulatorUI();
-            simulator.setVisible(true);
-        });
+        SwingUtilities.invokeLater(() -> new SimulatorUI().setVisible(true));
     }
 }
