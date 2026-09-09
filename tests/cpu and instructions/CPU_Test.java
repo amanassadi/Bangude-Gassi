@@ -1,3 +1,6 @@
+import simulator.CPU;
+import simulator.Instruction;
+
 public class CPU_Test {
     private static int passed = 0;
     private static int failed = 0;
