@@ -1,0 +1,54 @@
+digraph QueueFlow {
+  rankdir=TB; nodesep=0.45; ranksep=0.45;
+  fontname="Helvetica"; labelloc=t; fontsize=20;
+  label="FIFO Queue Flowchart (circular buffer, capacity 8)  -  STC89C52 simulator, Week 3\nMemory: HEAD=20H  TAIL=21H  COUNT=22H  STATUS=23H  BUFFER=30H-37H";
+  node [fontname="Helvetica", fontsize=12, style=filled, fillcolor="#FFFFFF"];
+  edge [fontname="Helvetica", fontsize=11];
+
+  subgraph cluster_enq {
+    label="ENQUEUE  (value in R2)"; style=rounded; color="#2563EB"; fontsize=15; fontname="Helvetica-Bold";
+    e0 [label="START ENQ", shape=oval, fillcolor="#DBEAFE"];
+    e1 [label="PUSH R0\n(save register)", shape=box];
+    e2 [label="A = COUNT", shape=box];
+    e3 [label="FULL condition:\nCOUNT == 8 ?", shape=diamond, fillcolor="#FEF3C7"];
+    e4 [label="STATUS = 1 (FULL)\nreject value,\nqueue unchanged", shape=box, fillcolor="#FEE2E2"];
+    e5 [label="R0 = 30H + TAIL\n(address of slot)", shape=box];
+    e6 [label="BUFFER[TAIL] = R2\n(MOV @R0,A)", shape=box];
+    e7 [label="TAIL = (TAIL + 1) AND 07H\n(wrap-around)", shape=box];
+    e8 [label="COUNT = COUNT + 1", shape=box];
+    e9 [label="STATUS = 0 (OK)", shape=box, fillcolor="#DCFCE7"];
+    e10 [label="POP R0\n(restore register)", shape=box];
+    e11 [label="RET", shape=oval, fillcolor="#DBEAFE"];
+    e0->e1->e2->e3;
+    e3->e4 [label=" YES"];
+    e3->e5 [label=" NO"];
+    e5->e6->e7->e8->e9->e10;
+    e4->e10;
+    e10->e11;
+  }
+
+  subgraph cluster_deq {
+    label="DEQUEUE  (result in R3)"; style=rounded; color="#DC2626"; fontsize=15; fontname="Helvetica-Bold";
+    d0 [label="START DEQ", shape=oval, fillcolor="#FEE2E2"];
+    d1 [label="PUSH R0\n(save register)", shape=box];
+    d2 [label="A = COUNT", shape=box];
+    d3 [label="EMPTY condition:\nCOUNT == 0 ?\n(JNZ)", shape=diamond, fillcolor="#FEF3C7"];
+    d4 [label="STATUS = 2 (EMPTY)\nnothing removed,\nR3 unchanged", shape=box, fillcolor="#FEE2E2"];
+    d5 [label="R0 = 30H + HEAD\n(address of slot)", shape=box];
+    d6 [label="R3 = BUFFER[HEAD]\n(MOV A,@R0 ; MOV R3,A)", shape=box];
+    d7 [label="HEAD = (HEAD + 1) AND 07H\n(wrap-around)", shape=box];
+    d8 [label="COUNT = COUNT - 1", shape=box];
+    d9 [label="STATUS = 0 (OK)", shape=box, fillcolor="#DCFCE7"];
+    d10 [label="POP R0\n(restore register)", shape=box];
+    d11 [label="RET", shape=oval, fillcolor="#FEE2E2"];
+    d0->d1->d2->d3;
+    d3->d4 [label=" YES"];
+    d3->d5 [label=" NO"];
+    d5->d6->d7->d8->d9->d10;
+    d4->d10;
+    d10->d11;
+  }
+
+  legend [shape=note, fillcolor="#F3F4F6", fontsize=11, label="Queue status / update (after every operation):\nSTATUS 0 = OK   1 = FULL   2 = EMPTY\nQueue is EMPTY when COUNT = 0, FULL when COUNT = 8\nFIFO: ENQ writes at TAIL, DEQ reads at HEAD (oldest first)"];
+  e11 -> legend [style=invis];
+}
