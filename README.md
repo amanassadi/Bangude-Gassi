@@ -1,47 +1,63 @@
-# STC89C52 Week 4 - Multi-Process Simulator & IPC
+# STC89C52 Week 4 — Multi-Process Simulator & IPC
 
-This project is built directly on the supplied Week 3 simulator.
+## Processes
+- UI Process: Swing interface and user interaction.
+- Core Process: CPU execution, Memory, Stack and FIFO Queue.
+- Logging Process: execution/error logging.
+- Integration: creates FIFOs and starts the three independent processes.
 
-## Week 3 retained
-- CPU
-- Instruction
-- Memory
-- Stack
-- FifoQueue
-- Assembler
-- QueueValidator
-- Existing dark-blue Swing SimulatorUI
-- Week 3 tests and documentation
+## POSIX IPC
+**POSIX Named Pipes (FIFO)** are used for communication between processes.
 
-## Week 4 added
-- UI Process
-- Core Process
-- Logging Process
-- IntegrationLauncher
-- Java TCP socket IPC
-- Threaded client handling with ExecutorService
-- IPCIntegrationTest
-- Windows BAT launch/test scripts
+- UI -> Core: `/tmp/stc89_ui_to_core`
+- Core -> UI: `/tmp/stc89_core_to_ui`
+- Core -> Logger: `/tmp/stc89_core_to_log`
 
-## Architecture
-UI Process --TCP :5000--> Core Process --TCP :5001--> Logging Process
+POSIX threads are used where concurrency is appropriate inside a process. They are
+not the IPC mechanism; FIFOs provide the inter-process communication.
 
-Core contains the existing Week 3 CPU, Memory, Stack, FIFO Queue and Assembler.
+## Flow
+`UI -> Core -> CPU / Memory / Stack / Queue -> Logger`
 
-## Windows run
-1. Install JDK 11 or newer.
-2. Open Command Prompt in this project folder.
-3. Run `run_week4.bat`.
-4. The existing Week 3 UI opens.
-5. Use LOAD and RUN as in Week 3.
+## Folder structure
+- `core/` — Week 3 CPU, Instruction, Memory, Stack, FifoQueue, Assembler + CoreProcess
+- `ui/` — UIProcess
+- `logging/` — LoggingProcess
+- `integration/` — IntegrationLauncher
+- `tests/` — IPC FIFO smoke test
+- `programs/` — sample assembly program
+- `docs/` — architecture, IPC justification and benchmark template
 
-## IPC test
-Run `test_week4.bat`.
-Expected final line:
-ALL WEEK 4 IPC TESTS PASSED
+## Linux / WSL run
+From the Week 4 directory:
 
-## Important IPC note
-This Windows version uses Java TCP sockets. TCP sockets are not technically a
-POSIX IPC primitive. The Week 4 brief requires selecting an IPC mechanism but
-does not name FIFO as mandatory. If the instructor explicitly requires POSIX
-IPC, use the FIFO implementation under Linux/WSL.
+```bash
+chmod +x run_week4.sh
+./run_week4.sh
+```
+
+The launcher creates the three POSIX FIFOs and starts Logging, Core and UI.
+
+For the FIFO smoke test, while the launcher is running:
+
+```bash
+java -cp tests IPCTest
+```
+
+Expected result:
+`IPC FIFO TEST PASSED`
+
+## Demo
+1. Run `./run_week4.sh`.
+2. The Swing UI opens.
+3. Keep `programs/queue_test.asm` in the project directory, or enter another assembly path.
+4. Click **Run**.
+5. UI sends `RUN|program.asm` to Core.
+6. Core assembles and executes using CPU/Memory/Stack/FifoQueue.
+7. Core sends status/results to UI.
+8. Core sends INFO/ERROR messages to Logger.
+9. Logger appends them to `execution.log`.
+10. Click **Exit** in the UI to stop the Core process.
+
+## Platform note
+The POSIX FIFO implementation requires Linux/Unix. On Windows, use WSL/Ubuntu for the Week 4 demonstration.
