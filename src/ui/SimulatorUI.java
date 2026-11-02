@@ -1,272 +1,182 @@
-package ui;
-
-import simulator.CPU;
-import simulator.Instruction;
-
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.border.*;
+import javax.swing.table.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.awt.geom.*;
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
 import java.util.List;
 
-/**
- * Simple Swing UI for the existing STC89C52 simulator classes.
- * The UI controls and displays the real CPU; it does not re-implement the CPU.
- */
+/** Premium dark-blue Swing dashboard for the existing STC89C52 engine. */
 public class SimulatorUI extends JFrame {
+    private static final Color BG=new Color(5,13,31), CARD=new Color(13,29,57), INK=new Color(229,240,255), BLUE=new Color(86,169,255), LIGHT=new Color(39,70,114), MUTED=new Color(139,168,207);
+    private static final Color EDITOR_BG=new Color(8,21,44), ACCENT=new Color(42,112,235), CYAN=new Color(99,209,242);
+    private static final Font FONT=new Font("Segoe UI",Font.PLAIN,13), MONO=new Font("Consolas",Font.PLAIN,13);
+    private CPU cpu=new CPU();
+    private FifoQueue queue=FifoQueue.attach(cpu.getMemory());
+    private List<Instruction> program=new ArrayList<>();
+    private final JTextArea editor=new JTextArea(8,50), stack=new JTextArea(), fifo=new JTextArea(), trace=new JTextArea(), result=new JTextArea();
+    private final DefaultTableModel instructions=model("", "ADDRESS","INSTRUCTION","CATEGORY"), memory=model("ADDRESS","VALUE");
+    private final JTable instructionTable=table(instructions), memoryTable=table(memory);
+    private final JLabel status=new JLabel("●  READY"), current=new JLabel("No instruction loaded"), addr=new JLabel("Address: ----"), sp=new JLabel(), queueSize=new JLabel();
+    private final JLabel[] reg=new JLabel[12], flags=new JLabel[4];
+    private javax.swing.Timer timer;
+    private int lastA,lastPC;
+    private String lastInstruction="";
+    private final String[] names={"PC","SP","A","B","R0","R1","R2","R3","R4","R5","R6","R7"};
 
-    private final CPU cpu = new CPU();
-    private List<Instruction> loadedProgram = new ArrayList<>();
-
-    private final DefaultTableModel programModel = new DefaultTableModel(
-            new Object[]{"Address", "Instruction"}, 0) {
-        @Override
-        public boolean isCellEditable(int row, int column) {
-            return false;
-        }
-    };
-
-    private final JTable programTable = new JTable(programModel);
-    private final JTextArea traceArea = new JTextArea();
-    private final JLabel statusLabel = new JLabel("READY");
-    private final JLabel currentInstructionLabel = new JLabel("None");
-
-    private final JLabel pcLabel = new JLabel();
-    private final JLabel spLabel = new JLabel();
-    private final JLabel aLabel = new JLabel();
-    private final JLabel bLabel = new JLabel();
-    private final JLabel[] rLabels = new JLabel[8];
-    private final JLabel flagsLabel = new JLabel();
-
-    private final DefaultTableModel memoryModel = new DefaultTableModel(
-            new Object[]{"Address", "Value"}, 0) {
-        @Override
-        public boolean isCellEditable(int row, int column) {
-            return false;
-        }
-    };
-
-    public SimulatorUI() {
-        setTitle("STC89C52 Microcontroller Simulator");
-        setSize(950, 650);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-
-        buildUI();
-        updateCpuDisplay();
+    public SimulatorUI(){
+        super("STC89C52  |  Blue Simulator");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);setSize(1500,920);setMinimumSize(new Dimension(1250,760));setLocationRelativeTo(null);
+        editor.setText("; Write assembly here — stack and FIFO commands are supported\nMOV A,#10\nMOV 30H,#25\nPUSH 30H\nPOP 31H\nENQUEUE #12\nENQUEUE A\nDEQUEUE R0\nHALT");
+        build();refresh();
     }
-
-    private void buildUI() {
-        setLayout(new BorderLayout(8, 8));
-
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton loadButton = new JButton("Load");
-        JButton resetButton = new JButton("Reset");
-        JButton stepButton = new JButton("Step");
-        JButton runButton = new JButton("Run");
-
-        top.add(loadButton);
-        top.add(resetButton);
-        top.add(stepButton);
-        top.add(runButton);
-        top.add(Box.createHorizontalStrut(20));
-        top.add(new JLabel("Status:"));
-        top.add(statusLabel);
-        add(top, BorderLayout.NORTH);
-
-        programTable.setFillsViewportHeight(true);
-        programTable.setRowHeight(24);
-
-        JPanel left = new JPanel(new BorderLayout(5, 5));
-        left.setBorder(BorderFactory.createTitledBorder("Program / Instructions"));
-        left.add(new JScrollPane(programTable), BorderLayout.CENTER);
-
-        JPanel currentPanel = new JPanel(new BorderLayout());
-        currentPanel.setBorder(BorderFactory.createTitledBorder("Current Instruction"));
-        currentPanel.add(currentInstructionLabel, BorderLayout.CENTER);
-        left.add(currentPanel, BorderLayout.SOUTH);
-
-        JPanel center = new JPanel(new BorderLayout(5, 5));
-        center.setBorder(BorderFactory.createTitledBorder("Registers"));
-        center.add(createRegisterPanel(), BorderLayout.CENTER);
-
-        JPanel right = new JPanel(new BorderLayout(5, 5));
-        right.setBorder(BorderFactory.createTitledBorder("Memory (Data Memory)"));
-        right.add(new JScrollPane(new JTable(memoryModel)), BorderLayout.CENTER);
-
-        JPanel upper = new JPanel(new GridLayout(1, 3, 8, 8));
-        upper.add(left);
-        upper.add(center);
-        upper.add(right);
-
-        traceArea.setEditable(false);
-        traceArea.setLineWrap(true);
-        traceArea.setWrapStyleWord(true);
-        traceArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 13));
-
-        JPanel tracePanel = new JPanel(new BorderLayout());
-        tracePanel.setBorder(BorderFactory.createTitledBorder("Execution Trace"));
-        tracePanel.add(new JScrollPane(traceArea), BorderLayout.CENTER);
-
-        JPanel bottom = new JPanel(new BorderLayout(8, 8));
-        bottom.add(tracePanel, BorderLayout.CENTER);
-        bottom.add(createFlagsPanel(), BorderLayout.EAST);
-
-        add(upper, BorderLayout.CENTER);
-        add(bottom, BorderLayout.SOUTH);
-
-        loadButton.addActionListener(e -> loadProgram());
-        resetButton.addActionListener(e -> resetSimulator());
-        stepButton.addActionListener(e -> stepProgram());
-        runButton.addActionListener(e -> runProgram());
+    private static DefaultTableModel model(String... cols){return new DefaultTableModel(cols,0){public boolean isCellEditable(int r,int c){return false;}};}
+    private static JTable table(DefaultTableModel m){
+        JTable t=new JTable(m);t.setFont(MONO);t.setRowHeight(30);t.setForeground(INK);t.setBackground(EDITOR_BG);
+        t.setGridColor(new Color(25,49,82));t.setShowVerticalLines(false);t.setSelectionBackground(new Color(29,75,131));
+        t.setSelectionForeground(Color.WHITE);t.setIntercellSpacing(new Dimension(0,1));t.setFillsViewportHeight(true);
+        JTableHeader h=t.getTableHeader();h.setBackground(new Color(20,43,79));h.setForeground(CYAN);h.setFont(new Font("Segoe UI",Font.BOLD,11));h.setPreferredSize(new Dimension(0,32));
+        return t;
     }
-
-    private JPanel createRegisterPanel() {
-        JPanel panel = new JPanel(new GridLayout(0, 2, 4, 4));
-        panel.add(new JLabel("PC"));
-        panel.add(pcLabel);
-        panel.add(new JLabel("SP"));
-        panel.add(spLabel);
-        panel.add(new JLabel("A"));
-        panel.add(aLabel);
-        panel.add(new JLabel("B"));
-        panel.add(bLabel);
-
-        for (int i = 0; i < 8; i++) {
-            rLabels[i] = new JLabel();
-            panel.add(new JLabel("R" + i));
-            panel.add(rLabels[i]);
-        }
-        return panel;
-    }
-
-    private JPanel createFlagsPanel() {
-        JPanel panel = new JPanel(new GridLayout(2, 1, 4, 4));
-        panel.setBorder(BorderFactory.createTitledBorder("Flags / Status"));
-        flagsLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        panel.add(flagsLabel);
-        return panel;
-    }
-
-    /** Load a small demo program using the project's real Instruction and CPU classes. */
-    private void loadProgram() {
-        loadedProgram = new ArrayList<>();
-        loadedProgram.add(new Instruction("MOV", "R0", "#10"));
-        loadedProgram.add(new Instruction("MOV", "A", "#20"));
-        loadedProgram.add(new Instruction("ADD", "A", "R0"));
-        loadedProgram.add(new Instruction("INC", "R0", ""));
-        loadedProgram.add(new Instruction("DEC", "A", ""));
-        loadedProgram.add(new Instruction("ANL", "A", "#15"));
-        loadedProgram.add(new Instruction("ORL", "A", "#2"));
-
-        cpu.loadProgram(loadedProgram);
-
-        programModel.setRowCount(0);
-        for (int i = 0; i < loadedProgram.size(); i++) {
-            programModel.addRow(new Object[]{String.format("%04X", i), loadedProgram.get(i)});
-        }
-
-        currentInstructionLabel.setText("None");
-        traceArea.setText("Program loaded successfully.\n");
-        statusLabel.setText("LOADED");
-        updateCpuDisplay();
-    }
-
-    private void resetSimulator() {
-        cpu.reset();
-        currentInstructionLabel.setText("None");
-        traceArea.setText("Simulator reset.\n");
-        statusLabel.setText("READY");
-        updateCpuDisplay();
-    }
-
-    private void stepProgram() {
-        Instruction instruction = cpu.fetch();
-
-        if (instruction == null) {
-            statusLabel.setText("FINISHED");
-            currentInstructionLabel.setText("None");
-            traceArea.append("Program finished.\n");
-            updateCpuDisplay();
-            return;
-        }
-
-        int oldPC = cpu.getPC();
-        int oldA = cpu.getA();
-        int oldR0 = cpu.getRegisterValue("R0");
-
-        currentInstructionLabel.setText(String.format("%04X : %s", oldPC, instruction));
-        traceArea.append(String.format("FETCH   : %s%n", instruction));
-        traceArea.append(String.format("DECODE  : %s%n", instruction));
-
-        cpu.step();
-
-        traceArea.append(String.format(
-                "EXECUTE : PC %04X -> %04X | A %02X -> %02X | R0 %02X -> %02X%n%n",
-                oldPC, cpu.getPC(), oldA & 0xFF, cpu.getA() & 0xFF,
-                oldR0 & 0xFF, cpu.getRegisterValue("R0") & 0xFF));
-
-        statusLabel.setText(cpu.fetch() == null ? "FINISHED" : "EXECUTING");
-        updateCpuDisplay();
-        selectCurrentInstruction();
-    }
-
-    private void runProgram() {
-        if (cpu.fetch() == null) {
-            statusLabel.setText("FINISHED");
-            return;
-        }
-
-        while (!cpu.isHalted() && cpu.fetch() != null) {
-            stepProgram();
-        }
-
-        statusLabel.setText("FINISHED");
-        updateCpuDisplay();
-    }
-
-    private void selectCurrentInstruction() {
-        int row = cpu.getPC();
-        if (row >= 0 && row < programModel.getRowCount()) {
-            programTable.setRowSelectionInterval(row, row);
-            programTable.scrollRectToVisible(programTable.getCellRect(row, 0, true));
-        } else {
-            programTable.clearSelection();
+    private static class RoundPanel extends JPanel {
+        RoundPanel(LayoutManager layout){super(layout);setOpaque(false);}
+        @Override protected void paintComponent(Graphics graphics){
+            Graphics2D g=(Graphics2D)graphics.create();g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setColor(CARD);g.fillRoundRect(1,1,getWidth()-2,getHeight()-2,18,18);
+            g.setColor(LIGHT);g.drawRoundRect(1,1,getWidth()-3,getHeight()-3,18,18);g.dispose();super.paintComponent(graphics);
         }
     }
+    private JPanel card(String heading, JComponent child){
+        JPanel p=new RoundPanel(new BorderLayout(0,12));p.setBorder(new EmptyBorder(15,17,15,17));
+        JLabel title=new JLabel(heading);title.setForeground(new Color(137,198,255));title.setFont(new Font("Segoe UI",Font.BOLD,12));
+        p.add(title,BorderLayout.NORTH);p.add(child,BorderLayout.CENTER);return p;
+    }
+    private static JTextArea output(JTextArea t){t.setEditable(false);t.setFont(MONO);t.setForeground(INK);t.setBackground(EDITOR_BG);t.setCaretColor(CYAN);t.setMargin(new Insets(10,12,10,12));t.setLineWrap(true);t.setWrapStyleWord(true);return t;}
+    private static JScrollPane scroll(JComponent c){JScrollPane s=new JScrollPane(c);s.setBorder(new LineBorder(new Color(27,53,91)));s.getViewport().setBackground(EDITOR_BG);s.getVerticalScrollBar().setUnitIncrement(15);return s;}
+    private JButton button(String title,Runnable action){
+        JButton b=new JButton(title){@Override protected void paintComponent(Graphics graphics){Graphics2D g=(Graphics2D)graphics.create();g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);g.setColor(getModel().isRollover()?new Color(55,133,247):ACCENT);g.fillRoundRect(0,0,getWidth(),getHeight(),12,12);g.dispose();super.paintComponent(graphics);}};
+        b.setContentAreaFilled(false);b.setOpaque(false);b.setFont(new Font("Segoe UI",Font.BOLD,12));b.setForeground(Color.WHITE);b.setFocusPainted(false);
+        b.setBorder(new EmptyBorder(11,18,11,18));b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));b.addActionListener(e->action.run());return b;
+    }
+    private JPanel line(JComponent... items){JPanel p=new JPanel(new FlowLayout(FlowLayout.LEFT,9,3));p.setOpaque(false);for(JComponent item:items)p.add(item);return p;}
+    private JPanel textCard(String title,JTextArea area){return card(title,scroll(output(area)));}
+    private static JPanel transparent(LayoutManager layout){JPanel p=new JPanel(layout);p.setOpaque(false);return p;}
+    private static void tint(JLabel l,Color c,int size,boolean bold){l.setForeground(c);l.setFont(new Font("Segoe UI",bold?Font.BOLD:Font.PLAIN,size));}
+    private static JSplitPane split(int direction,Component a,Component b,double proportion){
+        JSplitPane s=new JSplitPane(direction,a,b);s.setBorder(null);s.setOpaque(false);s.setDividerSize(10);s.setResizeWeight(proportion);s.setContinuousLayout(true);return s;
+    }
+    private void build(){
+        JPanel root=transparent(new BorderLayout(0,11));
+        root.setBackground(BG);root.setOpaque(true);
+        root.setBorder(new EmptyBorder(15,19,16,19));setContentPane(root);
 
-    private void updateCpuDisplay() {
-        pcLabel.setText(String.format("%04X", cpu.getPC()));
-        spLabel.setText(String.format("%02X", cpu.getSP()));
-        aLabel.setText(String.format("%02X", cpu.getA() & 0xFF));
-        bLabel.setText(String.format("%02X", cpu.getRegisterValue("B") & 0xFF));
+        JPanel top=transparent(new BorderLayout(0,9));
+        JPanel titleArea=transparent(new GridLayout(2,1,0,3));
+        JLabel heading=new JLabel("STC89C52  MICROCONTROLLER SIMULATOR",SwingConstants.CENTER);
+        heading.setForeground(new Color(163,209,255));
+        heading.setFont(new Font("Consolas",Font.BOLD,23));
+        JLabel subtitle=new JLabel("8051 ARCHITECTURE  /  INTERACTIVE EXECUTION WORKSPACE",SwingConstants.CENTER);
+        tint(subtitle,MUTED,11,true);
+        titleArea.add(heading);titleArea.add(subtitle);
+        top.add(titleArea,BorderLayout.NORTH);
+        JPanel toolbar=new RoundPanel(new BorderLayout(6,0));
+        toolbar.setBorder(new EmptyBorder(6,10,6,10));
+        toolbar.add(line(button("LOAD",this::loadEditor),button("OPEN ASM",this::openFile),
+            button("RESET",this::reset),button("STEP",this::step),button("RUN",this::run),button("STOP",this::stop)),BorderLayout.WEST);
+        JPanel state=transparent(new FlowLayout(FlowLayout.RIGHT,8,7));
+        tint(status,CYAN,12,true);state.add(status);toolbar.add(state,BorderLayout.EAST);
+        top.add(toolbar,BorderLayout.CENTER);
+        root.add(top,BorderLayout.NORTH);
 
-        for (int i = 0; i < 8; i++) {
-            rLabels[i].setText(String.format("%02X", cpu.getRegisterValue("R" + i) & 0xFF));
+        editor.setFont(new Font("Consolas",Font.PLAIN,14));editor.setForeground(INK);
+        editor.setBackground(EDITOR_BG);editor.setCaretColor(CYAN);
+        editor.setSelectionColor(new Color(42,91,158));editor.setMargin(new Insets(12,14,12,14));
+        editor.setTabSize(4);
+        JPanel editorWrap=transparent(new BorderLayout(0,6));
+        editorWrap.add(scroll(editor),BorderLayout.CENTER);
+        JLabel hint=new JLabel("One instruction per line  •  MOV A,#10  •  PUSH 30H  •  POP 31H  •  ENQUEUE #12  •  DEQUEUE R0");
+        tint(hint,MUTED,11,false);editorWrap.add(hint,BorderLayout.SOUTH);
+        JPanel editorCard=card("PROGRAM INPUT  /  ASSEMBLY EDITOR",editorWrap);
+        editorCard.setPreferredSize(new Dimension(0,220));
+
+        JPanel instructionColumn=transparent(new BorderLayout(0,10));
+        instructionColumn.add(card("PROGRAM  /  INSTRUCTIONS",scroll(instructionTable)),BorderLayout.CENTER);
+        JPanel now=transparent(new BorderLayout(0,7));
+        tint(current,INK,14,true);tint(addr,MUTED,12,false);
+        now.add(current,BorderLayout.NORTH);now.add(addr,BorderLayout.CENTER);
+        JPanel nowCard=card("CURRENT INSTRUCTION",now);
+        nowCard.setPreferredSize(new Dimension(0,110));
+        instructionColumn.add(nowCard,BorderLayout.SOUTH);
+
+        JPanel registerGrid=transparent(new GridLayout(12,2,4,2));
+        for(int i=0;i<names.length;i++){
+            JLabel n=new JLabel(names[i]);tint(n,MUTED,12,true);registerGrid.add(n);
+            reg[i]=new JLabel("00H",SwingConstants.RIGHT);
+            reg[i].setForeground(INK);reg[i].setFont(new Font("Consolas",Font.BOLD,13));
+            registerGrid.add(reg[i]);
+        }
+        JPanel registersCard=card("REGISTERS",registerGrid);
+        JPanel memoryCard=card("DATA MEMORY  /  256 ADDRESSES",scroll(memoryTable));
+        JPanel stackCard=textCard("STACK  /  LIFO",stack);
+        JPanel queueCard=textCard("FIFO QUEUE",fifo);
+
+        // Distinctive asymmetric workspace: instruction stream on the left,
+        // CPU and the full RAM inspector in the center, stack/queue on the right.
+        JPanel middle=transparent(new GridBagLayout());
+        JPanel cpuMemory=transparent(new BorderLayout(0,10));
+        registersCard.setPreferredSize(new Dimension(0,295));
+        cpuMemory.add(registersCard,BorderLayout.NORTH);
+        cpuMemory.add(memoryCard,BorderLayout.CENTER);
+        JPanel dataStructures=transparent(new GridLayout(2,1,0,10));
+        dataStructures.add(stackCard);
+        dataStructures.add(queueCard);
+        JComponent[] panels={instructionColumn,cpuMemory,dataStructures};
+        double[] weights={1.45,1.35,1.0};
+        for(int i=0;i<panels.length;i++){
+            GridBagConstraints c=new GridBagConstraints();c.gridx=i;c.gridy=0;
+            c.weightx=weights[i];c.weighty=1;c.fill=GridBagConstraints.BOTH;
+            c.insets=new Insets(0,i==0?0:6,0,i==2?0:6);
+            middle.add(panels[i],c);
         }
 
-        flagsLabel.setText(String.format(
-                "CY=%d   AC=%d   OV=%d   P=%d",
-                cpu.getCY() ? 1 : 0,
-                cpu.getAC() ? 1 : 0,
-                cpu.getOV() ? 1 : 0,
-                cpu.getP() ? 1 : 0));
-
-        updateMemoryDisplay();
-    }
-
-    private void updateMemoryDisplay() {
-        memoryModel.setRowCount(0);
-        int[] addresses = {0, 1, 2, 3, 4, 5, 6, 7, 0x20};
-        for (int address : addresses) {
-            memoryModel.addRow(new Object[]{
-                    String.format("%02X", address),
-                    String.format("%02X", cpu.readDataMemory(address))
-            });
+        JPanel flagsGrid=transparent(new GridLayout(1,4,8,0));
+        String[] fn={"CY","AC","OV","P"};
+        for(int i=0;i<4;i++){
+            JPanel f=transparent(new GridLayout(2,1,0,5));
+            JLabel name=new JLabel(fn[i],SwingConstants.CENTER);tint(name,MUTED,11,true);
+            flags[i]=new JLabel("0",SwingConstants.CENTER);
+            flags[i].setFont(new Font("Consolas",Font.BOLD,17));flags[i].setForeground(CYAN);
+            f.add(name);f.add(flags[i]);flagsGrid.add(f);
         }
+        JPanel bottom=transparent(new GridBagLayout());
+        JComponent[] bottomPanels={textCard("EXECUTION TRACE  /  FETCH → DECODE → EXECUTE",trace),
+                textCard("RESULT  /  CHANGES",result),card("FLAGS  /  STATUS",flagsGrid)};
+        double[] bottomWeights={1.4,1.2,.8};
+        for(int i=0;i<bottomPanels.length;i++){
+            GridBagConstraints c=new GridBagConstraints();c.gridx=i;c.gridy=0;
+            c.weightx=bottomWeights[i];c.weighty=1;c.fill=GridBagConstraints.BOTH;
+            c.insets=new Insets(0,i==0?0:5,0,i==2?0:5);
+            bottom.add(bottomPanels[i],c);
+        }
+        bottom.setPreferredSize(new Dimension(0,172));
+        JPanel content=transparent(new BorderLayout(0,10));
+        content.add(editorCard,BorderLayout.NORTH);
+        content.add(middle,BorderLayout.CENTER);
+        content.add(bottom,BorderLayout.SOUTH);
+        root.add(content,BorderLayout.CENTER);
     }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new SimulatorUI().setVisible(true));
-    }
+    private void loadEditor(){stop();try{List<Instruction> parsed=Assembler.assemble(editor.getText());program=parsed;cpu=new CPU();cpu.loadProgram(program);cpu.setTrace(false);queue=FifoQueue.attach(cpu.getMemory());trace.setText("FETCH     ○  Waiting\nDECODE    ○  Waiting\nEXECUTE   ○  Waiting\n\nProgram loaded: "+program.size()+" instructions\n");result.setText("Ready to execute.\n");status.setText("LOADED");refresh();}catch(RuntimeException ex){error(ex);}}
+    private void openFile(){JFileChooser fc=new JFileChooser();if(fc.showOpenDialog(this)==JFileChooser.APPROVE_OPTION){try{editor.setText(new String(Files.readAllBytes(fc.getSelectedFile().toPath())));loadEditor();}catch(IOException ex){error(ex);}}}
+    private void step(){if(cpu.isHalted()){stop();status.setText("HALTED");return;}Instruction ins=cpu.fetch();if(ins==null){stop();status.setText("END OF PROGRAM");return;}lastPC=cpu.getPC();lastA=cpu.getA();lastInstruction=ins.toString();try{cpu.step();trace.setText(String.format("FETCH     ●  PC=%04XH  %s\nDECODE    ●  %s\nEXECUTE   ●  Completed\n",lastPC,lastInstruction,lastInstruction));result.setText(String.format("Executed: %s\nA: %02XH -> %02XH\nPC: %04XH -> %04XH\nCycles: %d",lastInstruction,lastA,cpu.getA(),lastPC,cpu.getPC(),cpu.getCycles()));status.setText(cpu.isHalted()?"HALTED":"EXECUTED");refresh();}catch(RuntimeException ex){stop();error(ex);}}
+    private void run(){if(timer!=null&&timer.isRunning())return;timer=new javax.swing.Timer(140,e->{if(cpu.isHalted()||cpu.fetch()==null){stop();status.setText("FINISHED");return;}step();});timer.start();status.setText("RUNNING");}
+    private void stop(){if(timer!=null)timer.stop();if("RUNNING".equals(status.getText()))status.setText("STOPPED");}
+    private void reset(){stop();cpu=new CPU();cpu.loadProgram(program);cpu.setTrace(false);queue=FifoQueue.attach(cpu.getMemory());trace.setText("FETCH     ○  Waiting\nDECODE    ○  Waiting\nEXECUTE   ○  Waiting\n\nCPU reset.\n");result.setText("Ready.\n");status.setText("READY");refresh();}
+    private void error(Exception ex){status.setText("ERROR");result.setText("ERROR: "+ex.getMessage());JOptionPane.showMessageDialog(this,ex.getMessage(),"Simulator error",JOptionPane.ERROR_MESSAGE);refresh();}
+    private void refresh(){int[] vals={cpu.getPC(),cpu.getSP(),cpu.getA(),cpu.getB(),cpu.getRegisterValue("R0"),cpu.getRegisterValue("R1"),cpu.getRegisterValue("R2"),cpu.getRegisterValue("R3"),cpu.getRegisterValue("R4"),cpu.getRegisterValue("R5"),cpu.getRegisterValue("R6"),cpu.getRegisterValue("R7")};for(int i=0;i<reg.length;i++)reg[i].setText(String.format(i==0?"%04XH":"%02XH",vals[i]));boolean[] f={cpu.getCY(),cpu.getAC(),cpu.getOV(),cpu.getP()};for(int i=0;i<4;i++)flags[i].setText((f[i]?"1":"0"));
+        instructions.setRowCount(0);for(int i=0;i<program.size();i++){Instruction in=program.get(i);instructions.addRow(new Object[]{i==cpu.getPC()?"▶":"",String.format("%04XH",i),in.toString(),in.getOpcode()});}if(cpu.getPC()<program.size()){current.setText(program.get(cpu.getPC()).toString());addr.setText(String.format("Address: %04XH",cpu.getPC()));}else{current.setText(cpu.isHalted()?"HALTED":"No current instruction");addr.setText("Address: ----");}
+        memory.setRowCount(0);for(int a=0;a<256;a++){int v=cpu.getMemory().peek(a);memory.addRow(new Object[]{String.format("%02XH",a),String.format("%02XH",v)});}int[] st=cpu.getStackContents();StringBuilder sb=new StringBuilder(String.format("SP: %02XH   DEPTH: %d\n",cpu.getSP(),st.length));if(st.length==0)sb.append("Stack empty\n");for(int i=st.length-1;i>=0;i--)sb.append(String.format("%02XH  →  %02XH%s\n",CPU.STACK_BASE+1+i,st[i],i==st.length-1?"  TOP":""));stack.setText(sb.toString());
+        StringBuilder qb=new StringBuilder(String.format("SIZE: %d/%d  STATUS: %s\nFront → Rear\n",queue.size(),FifoQueue.CAPACITY,FifoQueue.statusName(queue.getStatus())));if(queue.isEmpty())qb.append("Queue empty\n");for(int v:queue.toList())qb.append(String.format("%02XH   ",v));fifo.setText(qb.toString());}
+    public static void main(String[] args){SwingUtilities.invokeLater(()->new SimulatorUI().setVisible(true));}
 }
