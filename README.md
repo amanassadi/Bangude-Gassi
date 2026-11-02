@@ -1,63 +1,112 @@
-# STC89C52 Week 4 — Multi-Process Simulator & IPC
+Week 4 – Multi-Process Simulator & IPC
 
-## Processes
-- UI Process: Swing interface and user interaction.
-- Core Process: CPU execution, Memory, Stack and FIFO Queue.
-- Logging Process: execution/error logging.
-- Integration: creates FIFOs and starts the three independent processes.
+Project Title
 
-## POSIX IPC
-**POSIX Named Pipes (FIFO)** are used for communication between processes.
+Educational Microcontroller Simulator with Process Scheduling (STC89C52)
 
-- UI -> Core: `/tmp/stc89_ui_to_core`
-- Core -> UI: `/tmp/stc89_core_to_ui`
-- Core -> Logger: `/tmp/stc89_core_to_log`
+1. Introduction
 
-POSIX threads are used where concurrency is appropriate inside a process. They are
-not the IPC mechanism; FIFOs provide the inter-process communication.
+Week 4 enhances the existing microcontroller simulator by introducing a multi-process architecture using Inter-Process Communication (IPC).
 
-## Flow
-`UI -> Core -> CPU / Memory / Stack / Queue -> Logger`
+The simulator is divided into three separate processes: UI Process, Core Process, and Logging Process. These processes communicate using Java TCP sockets to perform execution, display results, and maintain logs.
 
-## Folder structure
-- `core/` — Week 3 CPU, Instruction, Memory, Stack, FifoQueue, Assembler + CoreProcess
-- `ui/` — UIProcess
-- `logging/` — LoggingProcess
-- `integration/` — IntegrationLauncher
-- `tests/` — IPC FIFO smoke test
-- `programs/` — sample assembly program
-- `docs/` — architecture, IPC justification and benchmark template
+2. Objectives
 
-## Linux / WSL run
-From the Week 4 directory:
+* Implement a multi-process simulator architecture.
+* Establish communication between processes using Java Socket Programming.
+* Separate UI, Core, and Logging functionalities.
+* Integrate the existing CPU, Memory, Stack, and FIFO Queue components.
+* Enable execution commands and exchange results between processes.
+* Maintain execution and error logs.
 
-```bash
-chmod +x run_week4.sh
-./run_week4.sh
-```
+3. System Architecture
 
-The launcher creates the three POSIX FIFOs and starts Logging, Core and UI.
+The simulator consists of three main processes:
 
-For the FIFO smoke test, while the launcher is running:
+UI Process
 
-```bash
-java -cp tests IPCTest
-```
+* Provides the graphical user interface.
+* Accepts user input and assembly programs.
+* Sends commands to the Core Process.
+* Displays execution results and simulator status.
+
+Core Process
+
+* Responsible for the actual execution of the simulator.
+* Contains the CPU, Memory, Stack, and FIFO Queue.
+* Receives commands from the UI Process through a TCP socket.
+* Uses the Assembler to convert assembly instructions into executable instructions.
+* Executes programs using the CPU.
+* Sends execution results and status information back to the UI.
+
+Core Process Server Port: 5000
+
+Logging Process
+
+* Records execution activities.
+* Maintains error and event logs.
+* Receives logging information through socket communication.
+
+Logging Process Server Port: 5001
+
+4. Inter-Process Communication (IPC)
+
+Java TCP Socket Programming is used to establish communication between the three processes.
+
+The Core Process listens on port 5000 for incoming commands, while the Logging Process listens on port 5001 for logging information.
+
+The processes exchange messages to coordinate program execution, status updates, and logging operations.
+
+5. Core Process Components
+
+The Core Process reuses the components developed in the previous weeks:
+
+* CPU: Fetches, decodes, and executes instructions.
+* Memory: Provides 256 bytes of internal RAM.
+* Stack: Supports PUSH and POP operations using the Stack Pointer (SP).
+* FIFO Queue: Maintains First-In-First-Out data processing.
+* Assembler: Converts assembly source code into executable Instruction objects.
+
+6. Program Execution
+
+1. The user enters an assembly program through the UI.
+2. The UI sends the LOAD command to the Core Process.
+3. The Core Process passes the source code to the Assembler.
+4. The Assembler converts the source code into Instruction objects.
+5. The RUN command starts CPU execution.
+6. The CPU executes instructions until the HALT instruction is reached.
+7. The execution results are returned to the UI.
+8. Execution activities and errors are recorded by the Logging Process.
+
+7. Testing
+
+The following test files are provided:
+
+* test_week4.bat – Runs Week 4 IPC tests.
+* run_week4.bat – Starts the Week 4 simulator.
+
+Example assembly program:
+
+MOV A,#05
+INC A
+HALT
 
 Expected result:
-`IPC FIFO TEST PASSED`
 
-## Demo
-1. Run `./run_week4.sh`.
-2. The Swing UI opens.
-3. Keep `programs/queue_test.asm` in the project directory, or enter another assembly path.
-4. Click **Run**.
-5. UI sends `RUN|program.asm` to Core.
-6. Core assembles and executes using CPU/Memory/Stack/FifoQueue.
-7. Core sends status/results to UI.
-8. Core sends INFO/ERROR messages to Logger.
-9. Logger appends them to `execution.log`.
-10. Click **Exit** in the UI to stop the Core process.
+* Accumulator (A): 06
+* Program Counter (PC): 2
+* Stack Pointer (SP): 7
+* Execution Cycles: 3
 
-## Platform note
-The POSIX FIFO implementation requires Linux/Unix. On Windows, use WSL/Ubuntu for the Week 4 demonstration.
+8. Technologies Used
+
+* Java Programming Language
+* Java Socket Programming
+* TCP/IP Communication
+* Java Swing (GUI)
+* Microprocessor Architecture
+* Inter-Process Communication (IPC)
+
+9. Conclusion
+
+Week 4 successfully extends the existing microcontroller simulator into a multi-process system. By separating the UI, Core, and Logging functionalities and establishing communication through Java TCP sockets, the simulator achieves better modularity and process separation while retaining the CPU and hardware simulation features developed in previous weeks.
