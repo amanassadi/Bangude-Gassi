@@ -1,5 +1,3 @@
-package legacy;
-
 public class Instruction {
     private final String opcode;
     private final String destination;
