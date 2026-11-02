@@ -1,3 +1,5 @@
+package legacy;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -240,6 +242,7 @@ public class CPU {
     }
 
     public int getA() { return A; }
+    public int getSP() { return SP; }
     public int getPC() { return PC; }
     public boolean getCY() { return CY; }
     public boolean getAC() { return AC; }

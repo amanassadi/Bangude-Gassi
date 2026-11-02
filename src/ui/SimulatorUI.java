@@ -1,7 +1,7 @@
 package ui;
 
-import simulator.CPU;
-import simulator.Instruction;
+import legacy.CPU;
+import legacy.Instruction;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -257,13 +257,7 @@ public class SimulatorUI extends JFrame {
 
     private void updateMemoryDisplay() {
         memoryModel.setRowCount(0);
-        int[] addresses = {0, 1, 2, 3, 4, 5, 6, 7, 0x20};
-        for (int address : addresses) {
-            memoryModel.addRow(new Object[]{
-                    String.format("%02X", address),
-                    String.format("%02X", cpu.readDataMemory(address))
-            });
-        }
+        memoryModel.addRow(new Object[]{"--", "Not available in the legacy CPU"});
     }
 
     public static void main(String[] args) {
