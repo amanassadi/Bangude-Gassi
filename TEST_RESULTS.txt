@@ -1,0 +1,29 @@
+WEEK 4 TEST RESULTS
+===================
+
+Build:
+- javac -d out src/*.java : PASS
+
+Week 4 IPC test:
+- UI/Core socket protocol (PING/PONG): PASS
+- Core CPU execution: PASS
+- Core -> Logging socket: PASS
+- execution.log creation: PASS
+- Overall IPCIntegrationTest: PASS
+
+Verified execution:
+MOV A,#05
+INC A
+HALT
+
+Expected: A=06, PC=2, SP=7, cycles=3
+Observed:  A=06, PC=2, SP=7, cycles=3
+
+UI smoke test:
+- Swing SimulatorUI launched under a virtual display: PASS
+- UI window rendered: PASS
+
+Note:
+This Week 4 Windows build uses Java TCP sockets for IPC. TCP sockets are not a
+POSIX IPC primitive. If the instructor requires POSIX IPC specifically, use the
+POSIX FIFO version under Linux/WSL instead.

@@ -1,44 +1,57 @@
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.List;
 
+/**
+ * STC89C52 simulator - Week 3 demo.
+ *
+ *   java -cp out Main [program.asm] [--trace]
+ *
+ * Default program: programs/queue_test.asm. After the program finishes the
+ * registers, memory, stack and FIFO queue are displayed, followed by the
+ * expected-vs-actual validation table (only for the queue program).
+ */
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        String path = "programs/queue_test.asm";
+        boolean trace = false;
+        for (String a : args) {
+            if (a.equals("--trace")) trace = true;
+            else path = a;
+        }
+
+        List<Instruction> program = Assembler.assembleFile(path);
         CPU cpu = new CPU();
-
-        List<Instruction> program = new ArrayList<>();
-        program.add(new Instruction("MOV", "R0", "#10"));
-        program.add(new Instruction("MOV", "A", "#20"));
-        program.add(new Instruction("ADD", "A", "R0"));
-        program.add(new Instruction("INC", "R0", ""));
-        program.add(new Instruction("DEC", "A", ""));
-        program.add(new Instruction("ANL", "A", "#15"));
-        program.add(new Instruction("ORL", "A", "#2"));
-
         cpu.loadProgram(program);
-        System.out.println("===== STC89C52 WEEK 3 DEMO =====");
+        cpu.setTrace(trace);
+
+        System.out.println("===== STC89C52 WEEK 3 SIMULATOR =====");
+        System.out.println("Program : " + path + "  (" + program.size() + " instructions)");
+
         cpu.run();
-        cpu.displayState();
 
-        System.out.println("\n===== MEMORY =====");
-        cpu.getMemory().write(30, 100);
-        cpu.getMemory().write(31, 200);
-        cpu.getMemory().display();
+        System.out.println("Halted  : " + cpu.isHalted() + "   instructions executed: " + cpu.getCycles());
+        System.out.println();
+        ConsoleView.showRegisters(cpu);
+        System.out.println();
+        ConsoleView.showMemory(cpu, 0x00, 0x0F, "register bank 0 + stack area");
+        System.out.println();
+        ConsoleView.showMemory(cpu, 0x20, 0x37, "queue control + buffer");
+        System.out.println();
+        ConsoleView.showMemory(cpu, 0x40, 0x4F, "output area");
+        System.out.println();
+        ConsoleView.showMemory(cpu, 0x60, 0x67, "status / count records");
+        System.out.println();
+        ConsoleView.showStack(cpu);
+        System.out.println();
+        ConsoleView.showQueue(cpu.getMemory());
 
-        System.out.println("\n===== STACK =====");
-        cpu.getStack().push(10);
-        cpu.getStack().push(20);
-        cpu.getStack().push(30);
-        cpu.getStack().display();
-        System.out.println("POP: " + cpu.getStack().pop());
-        cpu.getStack().display();
-
-        System.out.println("\n===== FIFO QUEUE =====");
-        cpu.getQueue().enqueue(10);
-        cpu.getQueue().enqueue(20);
-        cpu.getQueue().enqueue(30);
-        cpu.getQueue().display();
-        System.out.println("DEQUEUE: " + cpu.getQueue().dequeue());
-        System.out.println("DEQUEUE: " + cpu.getQueue().dequeue());
-        cpu.getQueue().display();
+        if (path.endsWith("queue_test.asm")) {
+            System.out.println();
+            System.out.println("========== QUEUE VALIDATION: EXPECTED vs ACTUAL ==========");
+            QueueValidator v = new QueueValidator();
+            v.validate(cpu);
+            System.out.print(v.report());
+            if (v.getFailed() > 0) System.exit(1);
+        }
     }
 }
